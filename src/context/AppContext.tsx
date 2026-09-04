@@ -1,10 +1,11 @@
-import {
+import { 
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
-  type ReactNode,
+  type ReactNode
 } from "react";
 import type {
   Bird,
@@ -60,8 +61,24 @@ function persist(db: Database, session: Session | null) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [db, setDb] = useState<Database>(() => loadDb());
+  const [db, setDb] = useState<Database>(() => ({
+    users: [],
+    properties: [],
+    incubators: [],
+    batches: [],
+    birds: [],
+    health: [],
+    transactions: []
+  }));
   const [session, setSession] = useState<Session | null>(() => loadSession());
+
+  useEffect(() => {
+    async function initDb() {
+      const data = await loadDb();
+      setDb(data);
+    }
+    initDb();
+  }, []);
 
   const commit = useCallback((nextDb: Database, nextSession: Session | null) => {
     setDb(nextDb);
