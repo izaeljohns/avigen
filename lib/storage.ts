@@ -1,3 +1,4 @@
+import  supabase  from "./supabase";
 import type { Database, Session } from "../types";
 
 const DB_KEY = "avigen-db-v1";
@@ -13,18 +14,26 @@ const empty: Database = {
   transactions: [],
 };
 
-export function loadDb(): Database {
+export async function loadDb(): Promise<Database> {
   try {
-    const raw = localStorage.getItem(DB_KEY);
-    if (!raw) return structuredClone(empty);
-    return { ...empty, ...JSON.parse(raw) };
+    const { data, error } = await supabase
+      .from('user_data')
+      .select('content')
+      .eq('id', 'default_user')
+      .single();
+
+    if (error || !data) return structuredClone(empty);
+    return { ...empty, ...data.content };
   } catch {
     return structuredClone(empty);
   }
 }
 
-export function saveDb(db: Database) {
+export async function saveDb(db: Database): Promise<void> {
   localStorage.setItem(DB_KEY, JSON.stringify(db));
+  await supabase
+    .from('user_data')
+    .upsert({ id: 'default_user', content: db });
 }
 
 export function loadSession(): Session | null {
